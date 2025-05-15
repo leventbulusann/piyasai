@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let configuredAlerts = []; // Array to store alert objects
-    let notificationPermission = Notification.permission; // 'default', 'granted', or 'denied'
+    // Initialize notificationPermission considering if Notification API exists
+    let notificationPermission = typeof Notification !== 'undefined' ? Notification.permission : "unsupported";
 
     // Make them accessible in console for debugging
     window.priceHistories = priceHistories;
@@ -873,34 +874,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Notification Permission ---
     function requestNotificationPermission() {
+        // Check if the Notification API is supported by the browser
+        if (typeof Notification === 'undefined') {
+            console.warn("This browser does not support desktop notification.");
+            notificationPermission = "unsupported"; // Custom state
+            if (activeAlertsList) activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Notifications not supported by this browser.</p>';
+            if (addAlertBtn) addAlertBtn.disabled = true;
+            if (document.getElementById('alert-setup-container')) { // Check if element exists
+                document.getElementById('alert-setup-container').title = "Notifications not supported by this browser.";
+            }
+            renderActiveAlerts(); // Update alert list display based on new permission state
+            return; 
+        }
+
+        // Proceed if Notification API exists
         if (Notification.permission === 'default') {
             Notification.requestPermission().then(permission => {
-                notificationPermission = permission;
+                notificationPermission = permission; // Update our variable
                 if (permission === 'granted') {
                     console.log('Notification permission granted.');
-                    try {
-                        new Notification('Piyasa AI Alerts', { body: 'Notifications are now enabled!', tag: 'permission-granted' });
-                    } catch (e) {
-                        console.warn("Error showing initial notification, possibly due to service worker requirement on some platforms for persistent tags, or browser focus.", e);
+                    // Only create a notification if API is supported and permission granted
+                    if (typeof Notification !== 'undefined' && Notification.permission === "granted") {
+                        try {
+                            new Notification('Piyasa AI Alerts', { body: 'Notifications are now enabled!', tag: 'permission-granted' });
+                        } catch (e) {
+                            console.warn("Error showing initial notification.", e);
+                        }
                     }
                 } else {
+                    notificationPermission = 'denied'; // Explicitly set if denied after request
                     console.log('Notification permission denied.');
-                    // Optionally inform user how to enable later in browser settings
                 }
+                renderActiveAlerts(); // Re-render based on new permission
             });
         } else if (Notification.permission === 'denied') {
             console.warn('Notification permission is blocked. Please enable in browser settings.');
-            // You could show a persistent message in the UI here (e.g. in activeAlertsList)
-            if (activeAlertsList) activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Notification permission denied in browser settings.</p>';
+            notificationPermission = "denied"; // Ensure our variable reflects this
+            renderActiveAlerts(); // Re-render
+        } else if (Notification.permission === 'granted') {
+            notificationPermission = "granted"; // Ensure our variable reflects this
+            // renderActiveAlerts(); // No need to re-render if already granted and rendered unless state changed
         }
-        // If 'granted', notificationPermission is already set.
     }
 
     // --- Alert Management Functions ---
     function addAlert() {
+        if (notificationPermission === "unsupported") {
+            alert('Notifications are not supported by this browser. Alerts cannot be added.');
+            return;
+        }
         if (notificationPermission !== 'granted') {
             alert('Please grant notification permission first to add alerts. Check browser settings if blocked.');
-            requestNotificationPermission();
+            requestNotificationPermission(); // Prompt again or guide user
             return;
         }
 
@@ -969,18 +994,40 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderActiveAlerts() {
         if (!activeAlertsList) return;
         activeAlertsList.innerHTML = '';
-        if (configuredAlerts.length === 0 && notificationPermission === 'granted') {
-            activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No active alerts. Add one above!</p>';
-            return;
-        } else if (notificationPermission !== 'granted') {
-            // Message for denied/default already handled by requestNotificationPermission on load
-            // or could be reiterated here if settings panel is opened later.
-            if (Notification.permission === 'denied'){
-                 activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Notifications blocked by browser.</p>';
-            } else {
-                 activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Grant notification permission to use alerts.</p>';
+
+        if (notificationPermission === "unsupported") {
+            activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Desktop notifications are not supported by this browser.</p>';
+            if(addAlertBtn) addAlertBtn.disabled = true;
+            if (document.getElementById('alert-setup-container')) {
+                document.getElementById('alert-setup-container').title = "Notifications not supported by this browser.";
             }
             return;
+        }
+
+        if (configuredAlerts.length === 0 && notificationPermission === 'granted') {
+            activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No active alerts. Add one above!</p>';
+            if(addAlertBtn) addAlertBtn.disabled = false;
+            if (document.getElementById('alert-setup-container')) {
+                document.getElementById('alert-setup-container').title = ""; // Clear title
+            }
+            return;
+        } else if (notificationPermission !== 'granted') {
+            if (Notification.permission === 'denied'){
+                 activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Notifications blocked by browser.</p>';
+            } else { // default
+                 activeAlertsList.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Grant notification permission to use alerts.</p>';
+            }
+            if(addAlertBtn) addAlertBtn.disabled = false; // Allow trying to grant
+            if (document.getElementById('alert-setup-container')) {
+                document.getElementById('alert-setup-container').title = "Grant permission to add alerts";
+            }
+            return;
+        }
+        
+        // If we reach here, permission is granted and there might be alerts
+        if(addAlertBtn) addAlertBtn.disabled = false;
+        if (document.getElementById('alert-setup-container')) {
+             document.getElementById('alert-setup-container').title = ""; // Clear title
         }
 
         configuredAlerts.forEach(alert => {
@@ -1011,7 +1058,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Check Alerts Function (called after price updates) ---
     function checkAlerts(itemName, currentPrice) {
-        if (notificationPermission !== 'granted' || currentPrice === null || isNaN(currentPrice)) {
+        // Updated check to include unsupported and ensure Notification exists before checking permission
+        if (notificationPermission === "unsupported" || typeof Notification === 'undefined' || Notification.permission !== 'granted' || currentPrice === null || isNaN(currentPrice)) {
             return;
         }
 
@@ -1039,17 +1087,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         const notificationTitle = `${alert.itemName} Alert!`;
                         const notificationBody = `${alert.itemName} is now ${prefix}${currentPrice.toFixed(digits)} (Alert: ${alert.condition === 'above' ? '>' : '<'} ${prefix}${alert.value.toFixed(digits)})`;
                         
-                        try {
-                            new Notification(notificationTitle, {
-                                body: notificationBody,
-                                // icon: './assets/notification-icon.png', // Optional
-                                tag: `price-alert-${alert.id}` // Unique tag to prevent multiple similar notifications if rapidly re-triggered
-                            });
-                            alert.triggered = true;
-                            alertTriggeredThisCheck = true;
-                            console.log(`Alert triggered and notification sent for ${alert.itemName}`);
-                        } catch(e) {
-                            console.error("Error displaying notification:", e);
+                        // Final check before creating the notification instance
+                        if (typeof Notification !== 'undefined' && Notification.permission === "granted") {
+                            try {
+                                new Notification(notificationTitle, {
+                                    body: notificationBody,
+                                    // icon: './assets/notification-icon.png', // Optional icon path
+                                    tag: `price-alert-${alert.id}` 
+                                });
+                                alert.triggered = true;
+                                alertTriggeredThisCheck = true;
+                                console.log(`Alert triggered and notification sent for ${alert.itemName}`);
+                            } catch(e) {
+                                console.error("Error displaying notification:", e);
+                            }
+                        } else {
+                             // This case should ideally not be reached if the initial checkAlerts guard is correct
+                             console.warn("Attempted to send notification but permission no longer granted or API unavailable.");
                         }
                     }
                 } else {
