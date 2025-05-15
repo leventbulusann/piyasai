@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piyasa AI</title>
+    <!-- Google Font: Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" href="img/piyasai_favicon.ico" type="image/x-icon">
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- SortableJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-header">
+        <h1><i class="fas fa-chart-line"></i> Piyasa AI</h1>
+        <div class="controls">
+            <button id="settings-toggle-btn" title="Settings"><i class="fas fa-cog"></i></button>
+            <button id="compact-view-toggle" title="Toggle Compact View"><i class="fas fa-compress-alt"></i></button>
+            <button id="theme-switcher" title="Switch Theme"><i class="fas fa-moon"></i></button>
+            <button class="refresh-all-btn" id="refresh-all-btn" title="Refresh All"><i class="fas fa-sync-alt"></i> Refresh All</button>
+        </div>
+    </div>
+
+    <!-- NEW Price Ticker -->
+    <div class="price-ticker-container" id="priceTickerContainer">
+        <div class="price-ticker-wrap">
+            <div class="price-ticker-items" id="priceTickerItems">
+                <!-- Ticker items will be dynamically inserted here by JS -->
+                <!-- Example structure for one item (will be duplicated for seamless scroll):
+                <div class="ticker-item">
+                    <span class="ticker-name">GOLD</span>
+                    <span class="ticker-price">$2350.50</span>
+                    <span class="ticker-change increase">▲ $1.25</span>
+                </div>
+                -->
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <h2>Settings</h2>
+        <div class="settings-section">
+            <h3>Visible Cards:</h3>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="gold-card" checked> Gold</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="usdtry-card" checked> USD/TRY</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="eurtry-card" checked> EUR/TRY</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="altintlgr-card" checked> ALTIN (TL/GR)</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="btcusd-card" checked> BTC/USD</label>
+        </div>
+        <div class="settings-section">
+            <h3>Update Interval:</h3>
+            <select id="update-interval-select">
+                <option value="30000">30 Seconds</option>
+                <option value="60000" selected>1 Minute</option>
+                <option value="180000">3 Minutes</option>
+                <option value="300000">5 Minutes</option>
+            </select>
+        </div>
+        <div class="settings-section">
+            <h3>Price Alerts:</h3>
+            <div id="alert-setup-container">
+                <select id="alert-item-select">
+                    <option value="gold">Gold (USD/oz)</option>
+                    <option value="usdTry">USD/TRY</option>
+                    <option value="eurTry">EUR/TRY</option>
+                    <option value="altinTlGr">ALTIN (TL/GR)</option>
+                    <option value="btcusd">BTC/USD</option>
+                </select>
+                <select id="alert-condition-select">
+                    <option value="above">Price Above > </option>
+                    <option value="below">Price Below < </option>
+                </select>
+                <input type="number" id="alert-value-input" placeholder="Value (e.g., 2400)">
+                <button id="add-alert-btn" title="Add Alert"><i class="fas fa-plus"></i> Add Alert</button>
+            </div>
+            <div id="active-alerts-list">
+                <!-- Active alerts will be listed here -->
+            </div>
+        </div>
+        <button id="close-settings-btn">Close Settings</button>
+    </div>
+    <div class="overlay" id="settingsOverlay"></div>
+
+    <div class="main-container" id="mainContainer">
+        <div class="price-card" id="gold-card">
+            <h1><i class="fas fa-coins"></i> Gold Price</h1>
+            <div class="price-display">
+                <span class="value" id="gold-current-price">$----.--</span><span class="unit"> /oz</span>
+                <div class="loader" id="gold-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="gold-price-change" class="neutral">--</span>
+                <span id="gold-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="gold-tooltip-text">Previous: $----.--</span>
+            </div>
+            <!-- Sparkline Chart Area -->
+            <div class="sparkline-chart-container">
+                <div id="gold-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="gold-refresh-btn" title="Refresh Gold"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="gold-last-updated">Never</span>
+            </div>
+            <div id="gold-error-message" class="error"></div>
+
+            <!-- NEW High/Low Display -->
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="gold-high" class="high-value">H: --</span>
+                <span id="gold-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="usdtry-card">
+            <h1><i class="fas fa-dollar-sign"></i> USD / TRY</h1>
+            <div class="price-display">
+                <span class="value" id="usdtry-current-price">₺--.----</span><span class="unit"></span>
+                <div class="loader" id="usdtry-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="usdtry-price-change" class="neutral">--</span>
+                <span id="usdtry-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="usdTry-tooltip-text">Previous: ₺--.----</span>
+            </div>
+            <!-- Sparkline Chart Area -->
+            <div class="sparkline-chart-container">
+                <div id="usdtry-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="usdtry-refresh-btn" title="Refresh USD/TRY"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="usdtry-last-updated">Never</span>
+            </div>
+            <div id="usdtry-error-message" class="error"></div>
+
+            <!-- NEW High/Low Display -->
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="usdtry-high" class="high-value">H: --</span>
+                <span id="usdtry-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="eurtry-card">
+            <h1><i class="fas fa-euro-sign"></i> EUR / TRY</h1>
+            <div class="price-display">
+                <span class="value" id="eurtry-current-price">₺--.----</span><span class="unit"></span>
+                <div class="loader" id="eurtry-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="eurtry-price-change" class="neutral">--</span>
+                <span id="eurtry-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="eurTry-tooltip-text">Previous: ₺--.----</span>
+            </div>
+            <!-- Sparkline Chart Area -->
+            <div class="sparkline-chart-container">
+                <div id="eurtry-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="eurtry-refresh-btn" title="Refresh EUR/TRY"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="eurtry-last-updated">Never</span>
+            </div>
+            <div id="eurtry-error-message" class="error"></div>
+
+            <!-- NEW High/Low Display -->
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="eurtry-high" class="high-value">H: --</span>
+                <span id="eurtry-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="altintlgr-card">
+            <h1><i class="fas fa-ring"></i> ALTIN (TL/GR)</h1>
+            <div class="price-display">
+                <span class="value" id="altintlgr-current-price">₺---.--</span><span class="unit"> /gr</span>
+                <div class="loader" id="altintlgr-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="altintlgr-price-change" class="neutral">--</span>
+                <span id="altintlgr-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="altinTlGr-tooltip-text">Previous: ₺---.--</span>
+            </div>
+            <!-- Sparkline Chart Area -->
+            <div class="sparkline-chart-container">
+                <div id="altintlgr-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="altintlgr-refresh-btn" title="Refresh ALTIN/GR"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="altintlgr-last-updated">Never</span>
+            </div>
+            <div id="altintlgr-error-message" class="error"></div>
+
+            <!-- NEW High/Low Display -->
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="altintlgr-high" class="high-value">H: --</span>
+                <span id="altintlgr-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="btcusd-card">
+            <h1><i class="fab fa-btc"></i> BTC / USD</h1>
+            <div class="price-display">
+                <span class="value" id="btcusd-current-price">$-----.--</span><span class="unit"></span>
+                <div class="loader" id="btcusd-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="btcusd-price-change" class="neutral">--</span>
+                <span id="btcusd-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="btcusd-tooltip-text">Previous: $-----.--</span>
+            </div>
+            <div class="sparkline-chart-container">
+                <div id="btcusd-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="btcusd-refresh-btn" title="Refresh BTC/USD"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp">
+                Last updated: <span id="btcusd-last-updated">Never</span>
+            </div>
+            <div id="btcusd-error-message" class="error"></div>
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="btcusd-high" class="high-value">H: --</span>
+                <span id="btcusd-low" class="low-value">L: --</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,861 @@
+:root {
+    /* Light Theme (Default) */
+    --body-bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-headings: #34495e;
+    --accent-color: #3498db;
+    --accent-color-darker: #2980b9;
+    --green-increase: #27ae60;
+    --red-decrease: #c0392b;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-hover-color: rgba(0, 0, 0, 0.15);
+    --font-family-main: 'Open Sans', sans-serif;
+    --font-size-base: 16px;
+
+    /* Transitions */
+    --transition-speed: 0.2s;
+    --transition-timing: ease-in-out;
+
+    /* Scrollbar */
+    --scrollbar-track-bg: var(--body-bg);
+    --scrollbar-thumb-bg: #bdc3c7;
+    --scrollbar-thumb-hover-bg: #95a5a6;
+}
+
+[data-theme="dark"] {
+    --body-bg: #1a1a2e; /* Dark blue/purple */
+    --card-bg: #24243e;  /* Slightly lighter dark blue/purple */
+    --text-primary: #e0e0e0; /* Light grey for primary text */
+    --text-secondary: #a0a0b0; /* Medium grey for secondary text */
+    --text-headings: #f0f0f0; /* Very light grey for headings */
+    --accent-color: #4ecca3; /* Teal/Mint for accent */
+    --accent-color-darker: #3ba383;
+    --green-increase: #2ecc71; /* Brighter green */
+    --red-decrease: #e74c3c;   /* Brighter red */
+    --border-color: #3a3a5a; /* Darker border */
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --shadow-hover-color: rgba(0, 0, 0, 0.3);
+
+    /* Scrollbar Dark */
+    --scrollbar-track-bg: var(--body-bg);
+    --scrollbar-thumb-bg: #4a4a6a;
+    --scrollbar-thumb-hover-bg: #6a6a8a;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-bg);
+}
+
+body {
+    font-family: var(--font-family-main);
+    font-size: var(--font-size-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--body-bg);
+    /* Subtle Background Gradient */
+    background-image: linear-gradient(180deg, var(--body-bg) 0%, color-mix(in srgb, var(--body-bg) 95%, black) 100%);
+    margin: 0;
+    padding: 20px;
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: background-color var(--transition-speed) var(--transition-timing), color var(--transition-speed) var(--transition-timing);
+}
+
+.app-header {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 0 10px;
+}
+
+.app-header h1 {
+    color: var(--text-headings);
+    font-weight: 700;
+    font-size: 2em;
+}
+.app-header h1 i {
+    margin-right: 10px;
+    color: var(--accent-color);
+}
+
+/* Header Controls */
+.app-header .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.app-header .controls button {
+    background-color: var(--card-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) var(--transition-timing), color var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) var(--transition-timing);
+}
+.app-header .controls button:hover {
+    background-color: var(--accent-color);
+    color: var(--card-bg);
+    border-color: var(--accent-color);
+}
+.app-header .controls button i {
+    font-size: 1.2em; /* Ensure icons are a bit larger if button text is removed */
+}
+
+
+.refresh-all-btn { /* Assuming this might have specific styles or override general control buttons */
+    background-color: var(--accent-color);
+    color: white; /* Keep white for primary action or use var(--card-bg) if preferred */
+    border: none;
+    padding: 10px 18px;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) var(--transition-timing);
+    font-weight: 600;
+}
+.refresh-all-btn i {
+    margin-right: 8px;
+}
+.refresh-all-btn:hover {
+    background-color: var(--accent-color-darker);
+}
+.refresh-all-btn:disabled {
+    background-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+    cursor: not-allowed;
+}
+
+/* Grid Layout for Main Container */
+.main-container {
+    display: grid;
+    /* Default: auto-fit columns, min 280px, max 1fr */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.price-card {
+    background-color: var(--card-bg);
+    padding: 20px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    text-align: center;
+    width: auto; /* Let grid control width */
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-speed) var(--transition-timing), 
+                box-shadow var(--transition-speed) var(--transition-timing),
+                background-color var(--transition-speed) var(--transition-timing);
+    border: 1px solid transparent; /* For focus state consistency */
+}
+.price-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px var(--shadow-hover-color);
+}
+/* Improved Card Focus State */
+.price-card:focus-within, /* If any interactive element inside gets focus */
+.price-card .refresh-btn:focus { /* Specifically if the button gets focus */
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+
+.price-card h1 {
+    color: var(--text-headings);
+    margin-top: 0;
+    padding-bottom: 10px;     /* For separator */
+    margin-bottom: 15px;    /* Adjusted margin */
+    font-size: 1.3em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color); /* Visual Separator */
+}
+.price-card h1 i {
+    margin-right: 8px;
+    color: var(--accent-color);
+}
+
+.price-card .price-display {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text-primary); /* Changed from specific color */
+    position: relative;
+    min-height: 1.5em;
+}
+.price-card .price-display .value {
+    display: inline-block;
+    color: var(--text-primary); /* Ensure it uses theme color by default */
+    transition: color var(--transition-speed) var(--transition-timing); /* Add transition for color change */
+}
+.price-card .price-display .value.increase {
+    color: var(--green-increase);
+}
+.price-card .price-display .value.decrease {
+    color: var(--red-decrease);
+}
+.price-card .price-display .value.neutral {
+    color: var(--text-primary); /* Explicitly set neutral to primary text color */
+}
+.price-card .price-display .unit {
+    font-size: 0.5em; /* Smaller unit text */
+    font-weight: normal;
+    color: var(--text-secondary); /* Theme color for units */
+    margin-left: 2px;
+}
+.price-updating { /* For number fade animation */
+    opacity: 0.5;
+    transition: opacity 0.15s var(--transition-timing);
+}
+
+
+/* Loader Styles */
+.loader {
+    display: none;
+    border: 4px solid color-mix(in srgb, var(--accent-color) 20%, transparent); /* Lighter accent */
+    border-top: 4px solid var(--accent-color); /* Accent color */
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 5px auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.price-card.loading .price-display .value,
+.price-card.loading .price-display .unit { /* Also dim unit */
+    opacity: 0.3;
+}
+.price-card.loading .loader {
+    display: block;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+.price-card .change-display {
+    font-size: 1.05em;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+.price-card .change-display span.increase {
+    color: var(--green-increase);
+}
+.price-card .change-display span.decrease {
+    color: var(--red-decrease);
+}
+.price-card .change-display span.neutral {
+    color: var(--text-secondary);
+}
+
+/* New styles for percentage change */
+.percentage-change {
+    font-size: 0.85em; /* Slightly smaller */
+    margin-left: 5px; /* Space from the absolute change */
+    font-weight: normal; /* Can be normal or same as absolute change */
+}
+
+/* Ensure percentage change also gets color coding */
+.percentage-change.increase {
+    color: var(--green-increase);
+}
+.percentage-change.decrease {
+    color: var(--red-decrease);
+}
+.percentage-change.neutral {
+    color: var(--text-secondary);
+}
+
+.refresh-btn {
+    background-color: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 8px 12px;
+    font-size: 1.2em;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) var(--transition-timing), color var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) var(--transition-timing);
+    margin: 0 auto 15px auto;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.refresh-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--card-bg); /* Invert color for better contrast on hover */
+}
+.refresh-btn:disabled {
+    color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+    border-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+    background-color: transparent;
+    cursor: not-allowed;
+}
+.refresh-btn:disabled i.fa-sync-alt.fa-spin {
+    color: var(--text-secondary);
+}
+
+
+.price-card .timestamp {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-top: auto; /* Pushes to bottom */
+    border-top: 1px solid var(--border-color); /* Visual Separator */
+    padding-top: 10px;
+    margin-bottom: 10px; /* Add some space before high/low if timestamp is directly above */
+}
+
+.price-card .error {
+    color: var(--red-decrease); /* Use theme red */
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 0.9em;
+    min-height: 1.2em;
+}
+
+/* Flash Animations - update to use theme colors */
+@keyframes flashGreen {
+    0% { background-color: color-mix(in srgb, var(--green-increase) 30%, var(--card-bg)); }
+    70% { background-color: color-mix(in srgb, var(--green-increase) 30%, var(--card-bg)); }
+    100% { background-color: var(--card-bg); }
+}
+@keyframes flashRed {
+    0% { background-color: color-mix(in srgb, var(--red-decrease) 30%, var(--card-bg)); }
+    70% { background-color: color-mix(in srgb, var(--red-decrease) 30%, var(--card-bg)); }
+    100% { background-color: var(--card-bg); }
+}
+
+/* Compact View Styles */
+.main-container.compact-view .price-card {
+    min-height: auto;
+    padding: 15px;
+    border-radius: 8px;
+}
+.main-container.compact-view .price-card h1 {
+    font-size: 1.1em;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+.main-container.compact-view .price-card .price-display {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+.main-container.compact-view .price-card .price-display .unit {
+    font-size: 0.5em;
+}
+.main-container.compact-view .refresh-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+.main-container.compact-view .price-card .change-display {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+.main-container.compact-view .price-card .timestamp {
+    font-size: 0.75em;
+    padding-top: 8px;
+    margin-top: 10px;
+}
+.main-container.compact-view .price-card .error {
+    font-size: 0.8em;
+    margin-top: 8px;
+}
+
+/* NEW High/Low Display Styles */
+.high-low-display {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-top: 10px; /* Space from elements above */
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color); /* Optional separator */
+    text-align: center; /* Or left, as you prefer */
+}
+.high-low-display .label {
+    font-weight: 600;
+    margin-right: 8px;
+}
+.high-low-display .high-value,
+.high-low-display .low-value {
+    margin: 0 5px;
+}
+.high-low-display .high-value {
+    color: var(--green-increase); /* Use theme green for high */
+}
+.high-low-display .low-value {
+    color: var(--red-decrease);   /* Use theme red for low */
+}
+
+/* Adjust compact view if needed */
+.main-container.compact-view .high-low-display {
+    font-size: 0.75em;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+/* Tooltip Styles - from Phase 1 */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    min-width: 120px;
+    background-color: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 8px;
+    position: absolute;
+    z-index: 100;
+    bottom: calc(125% - 6px); /* Adjusted: Positioned 6px lower than original 125% */
+    left: 50%;
+    margin-left: -60px; /* Use half of the width (120/2 = 60), to center */
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s;
+    font-size: 0.8rem;
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Sparkline Chart Styles */
+.sparkline-chart-container {
+    width: 100%;
+    height: 50px; /* Adjust height as needed for your sparklines */
+    margin: 10px 0; /* Space around the chart */
+    position: relative; /* For potential tooltips or overlays on the chart later */
+}
+
+.sparkline {
+    width: 100%;
+    height: 100%;
+}
+
+/* ApexCharts specific styling (optional, to override defaults if needed) */
+.apexcharts-tooltip {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 5px var(--shadow-color) !important;
+}
+.apexcharts-tooltip .apexcharts-tooltip-title {
+    background: var(--body-bg) !important;
+    color: var(--text-headings) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .app-header {
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px; /* Reduce margin */
+    }
+    .app-header h1 {
+        font-size: 1.8em;
+    }
+    .app-header .controls {
+        flex-wrap: wrap; /* Allow controls to wrap on small screens */
+        justify-content: center;
+    }
+    .price-card {
+        width: 90%; 
+        min-height: auto;
+        padding: 15px;
+    }
+    .price-card .price-display {
+        font-size: 1.8em;
+    }
+    .main-container {
+        gap: 15px; /* Reduce gap */
+    }
+}
+
+/* Ensure the loader's accent color is also themed */
+[data-theme="dark"] .loader {
+    border: 4px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
+    border-top: 4px solid var(--accent-color);
+}
+
+/* Ensure refresh all button in controls has consistent styling with other control buttons if desired */
+.app-header .controls .refresh-all-btn {
+    /* Overrides to match other control buttons or keep its distinct primary style */
+    /* Example: To make it match other control buttons */
+    /* background-color: var(--card-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+    font-weight: normal; */
+
+    /* Keeping its primary action style: */
+    background-color: var(--accent-color);
+    color: white; /* Or var(--card-bg) for better dark mode contrast */
+    border: none; /* It already has none */
+}
+[data-theme="dark"] .app-header .controls .refresh-all-btn {
+    color: var(--body-bg); /* Ensure text readable on dark accent */
+}
+
+.app-header .controls .refresh-all-btn:hover {
+    background-color: var(--accent-color-darker);
+}
+.app-header .controls .refresh-all-btn:disabled {
+    background-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+    /* color for disabled text could be var(--text-secondary) or a mix */
+}
+
+/* Settings Panel Styles */
+.settings-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95); /* Start slightly scaled down */
+    background-color: var(--card-bg);
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Consider var(--shadow-color) or a new variable */
+    z-index: 1001; /* Above overlay */
+    width: 90%;
+    max-width: 450px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--transition-timing), transform 0.3s var(--transition-timing), visibility 0s linear 0.3s;
+}
+.settings-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+    transition-delay: 0s, 0s, 0s; /* For visibility to apply immediately on open */
+}
+
+.settings-panel h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--text-headings);
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+.settings-section {
+    margin-bottom: 20px;
+}
+.settings-section h3 {
+    font-size: 1.1em;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+.settings-section label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.settings-section input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: var(--accent-color); /* Styles the checkmark color */
+}
+.settings-section select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--body-bg); /* Match body for contrast */
+    color: var(--text-primary);
+    font-size: 0.95em;
+}
+.settings-section select:focus {
+    outline: 2px solid var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+#close-settings-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--accent-color);
+    color: var(--card-bg); /* Text color for button */
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) var(--transition-timing);
+}
+#close-settings-btn:hover {
+    background-color: var(--accent-color-darker);
+}
+
+/* Alert Setup UI in Settings Panel */
+#alert-setup-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+#alert-setup-container select,
+#alert-setup-container input[type="number"] {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--body-bg);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    flex-grow: 1; /* Allow them to grow */
+}
+#alert-setup-container input[type="number"] {
+    min-width: 80px; /* Ensure number input has some width */
+}
+#alert-setup-container select:focus,
+#alert-setup-container input[type="number"]:focus {
+    outline: 2px solid var(--accent-color);
+    border-color: var(--accent-color);
+}
+#add-alert-btn {
+    background-color: var(--accent-color);
+    color: var(--card-bg);
+    border: none;
+    padding: 9px 12px; /* Match height of inputs/selects */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+    font-size: 0.9em; /* For icon + text if any */
+}
+#add-alert-btn:hover {
+    background-color: var(--accent-color-darker);
+}
+
+/* Active Alerts List */
+#active-alerts-list {
+    margin-top: 15px;
+    max-height: 150px; /* Or adjust as needed */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 5px;
+}
+.active-alert {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background-color: color-mix(in srgb, var(--body-bg) 50%, var(--card-bg)); /* Slightly different bg */
+    color: var(--text-primary);
+    border-radius: 4px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+.active-alert:last-child {
+    margin-bottom: 0;
+}
+.active-alert span {
+    flex-grow: 1;
+}
+.remove-alert-btn {
+    background: transparent;
+    border: none;
+    color: var(--red-decrease);
+    cursor: pointer;
+    font-size: 1.1em; /* For icon size */
+    padding: 2px 5px;
+}
+.remove-alert-btn:hover {
+    color: color-mix(in srgb, var(--red-decrease) 70%, black);
+}
+
+/* Overlay for Modal Effect */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Consider a variable for overlay bg */
+    z-index: 1000; /* Below panel */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--transition-timing), visibility 0s linear 0.3s;
+}
+.overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s;
+}
+
+
+/* Styles for hiding cards */
+.price-card.hidden-card {
+    display: none !important; /* Use !important to override grid/flex displays if necessary */
+}
+
+/* SortableJS Ghost Class (optional, for styling the placeholder when dragging) */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #c8ebfb; /* A light blue - consider theming this or using an accent mix */
+}
+.sortable-chosen {
+    /* Styles for the item being dragged, if needed */
+    /* box-shadow: 0 5px 15px rgba(0,0,0,0.1); */
+}
+
+/* Adjust .controls in header for new button */
+/* The existing .app-header .controls styles should already provide a good base */
+/* We just need to ensure the general button styling is applied if it wasn't before */
+
+.app-header .controls button {
+    background-color: var(--card-bg); /* Ensuring new buttons match existing control style from Phase 1 */
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+    /* padding: 8px 12px; already there */
+    /* font-size: 1em; already there */
+    /* border-radius: 5px; already there */
+    /* cursor: pointer; already there */
+    /* transition: background-color var(--transition-speed) var(--transition-timing), color var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) var(--transition-timing); already there */
+}
+
+.app-header .controls button:hover {
+    background-color: var(--accent-color); /* Ensuring new buttons match existing control style from Phase 1 */
+    color: var(--card-bg);
+    border-color: var(--accent-color);
+}
+
+/* Ensure specific styling for refresh-all-btn is maintained or explicitly set */
+/* If .refresh-all-btn is inside .controls, these might need !important or more specific selectors if they conflict */
+.app-header .controls .refresh-all-btn {
+    background-color: var(--accent-color) !important; 
+    color: var(--card-bg) !important; /* Using --card-bg for text for better theme adaptability */
+    border-color: var(--accent-color) !important;
+}
+
+[data-theme="dark"] .app-header .controls .refresh-all-btn {
+    color: var(--body-bg) !important; /* Ensure text readable on dark accent */
+}
+
+.app-header .controls .refresh-all-btn:hover {
+    background-color: var(--accent-color-darker) !important;
+}
+
+/* Ensure the general .app-header .controls styles from Phase 1 are still effective */
+/* (No new code here, just a reminder to check existing styles for .app-header .controls and .app-header .controls button from style.css of Phase 1) */
+
+/* Price Ticker Styles */
+.price-ticker-container {
+    width: 100%;
+    background-color: var(--text-primary); /* Or a dark, contrasting color */
+    color: var(--card-bg); /* Light text on dark background */
+    padding: 8px 0;
+    overflow: hidden; /* Crucial to hide non-visible parts of scrolling items */
+    white-space: nowrap; /* Prevent items from wrapping to new lines */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 20px; /* Space below the ticker */
+    /* For fixed ticker at top:
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    padding-top: calc(env(safe-area-inset-top) + 8px); /* For iOS safe area */
+    */
+}
+
+.price-ticker-wrap {
+    display: inline-block; /* Allows animation of the whole block */
+    /* Animation will be applied here by JS after content width is known */
+}
+
+.price-ticker-items {
+    display: flex; /* Lay out items horizontally */
+    align-items: center;
+}
+
+.ticker-item {
+    display: inline-flex; /* Use flex for internal alignment */
+    align-items: baseline; /* Align text nicely */
+    padding: 0 20px; /* Space between items */
+    font-size: 0.9em;
+    line-height: 1;
+}
+
+.ticker-item .ticker-name {
+    font-weight: 600;
+    margin-right: 8px;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.ticker-item .ticker-price {
+    font-weight: 600;
+    margin-right: 8px;
+    /* Add transition for smooth color change */
+    transition: color var(--transition-speed) var(--transition-timing);
+}
+
+/* Color coding for the main ticker price based on change */
+.ticker-item .ticker-price.increase {
+    color: var(--green-increase) !important;
+}
+.ticker-item .ticker-price.decrease {
+    color: var(--red-decrease) !important;
+}
+.ticker-item .ticker-price.neutral {
+    color: var(--card-bg) !important; /* Default ticker text color (light on dark ticker bg) */
+    opacity: 1; /* Ensure full opacity for neutral price if it was previously dimmed */
+}
+
+.ticker-item .ticker-change {
+    font-size: 0.9em; /* Slightly smaller than price */
+    font-weight: normal;
+}
+
+.ticker-item .ticker-change.increase {
+    color: var(--green-increase); /* Use themed colors */
+}
+.ticker-item .ticker-change.decrease {
+    color: var(--red-decrease);
+}
+.ticker-item .ticker-change.neutral {
+    /* color: var(--text-secondary); /* Or a light grey that works on the ticker bg */
+    color: var(--card-bg); /* Use the ticker's main text color */
+    opacity: 0.75; /* Dim it slightly to differentiate from main price, similar to ticker-name */
+}
+
+/* Animation for scrolling - to be applied via JS after content duplication */
+/* This is a placeholder keyframe name, actual one will be dynamic */
+@keyframes scrollTickerAnimation {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); } /* Scroll by half the total width (original + duplicate) */
+}
