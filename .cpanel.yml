@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/tuie7kt89n0c/public_html/piyasa.live/
+    - /bin/cp -R * $DEPLOYPATH 
