@@ -93,9 +93,10 @@ body {
     font-weight: 700;
     font-size: 2em;
 }
-.app-header h1 i {
+.app-header h1 .header-icon {
     margin-right: 10px;
     color: var(--accent-color);
+    vertical-align: -0.125em; /* Adjust for better alignment with text */
 }
 
 /* Header Controls */
