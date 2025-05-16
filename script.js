@@ -5,30 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_HISTORY_POINTS = 20; // Number of data points for sparklines
 
     // Modified previousPrices to store arrays for history
-    let priceHistories = { // Renamed from previousPrices for clarity
-        gold: [],
-        usdTry: [],
-        eurTry: [],
-        altinTlGr: [],
-        btcusd: [] // Added for BTC
+    let priceHistories = {
+        gold: [], usdTry: [], eurTry: [], altinTlGr: [], btcusd: [],
+        ethusd: [], eurusd: [], xagusd: [] // NEW
     };
-    let previousDisplayPrices = { // To store the single last price for change calculation
-        gold: null,
-        usdTry: null,
-        eurTry: null,
-        altinTlGr: null,
-        btcusd: null // Added for BTC
+    let previousDisplayPrices = {
+        gold: null, usdTry: null, eurTry: null, altinTlGr: null, btcusd: null,
+        ethusd: null, eurusd: null, xagusd: null // NEW
     };
 
     let sparklineCharts = {}; // To store ApexCharts instances
     let flashTimeoutIds = {};
 
-    let sessionHighLow = { // To store session high/low for each item
-        gold: { high: null, low: null },
-        usdTry: { high: null, low: null },
-        eurTry: { high: null, low: null },
-        altinTlGr: { high: null, low: null },
-        btcusd: { high: null, low: null } // Added for BTC
+    let sessionHighLow = {
+        gold: { high: null, low: null }, usdTry: { high: null, low: null }, eurTry: { high: null, low: null },
+        altinTlGr: { high: null, low: null }, btcusd: { high: null, low: null },
+        ethusd: { high: null, low: null }, eurusd: { high: null, low: null },
+        xagusd: { high: null, low: null } // NEW
     };
 
     let configuredAlerts = []; // Array to store alert objects
@@ -183,6 +176,94 @@ document.addEventListener('DOMContentLoaded', () => {
             displayPrefix: '$',
             displaySuffix: '',
             digits: 2
+        },
+        { // NEW ETH/USD Configuration
+            name: 'ethusd',
+            tickerName: 'ETH/USD', // For the ticker bar - corrected tickerName
+            url: 'https://api.coinbase.com/v2/exchange-rates?currency=ETH',
+            parser: (data) => {
+                if (data && data.data && data.data.rates && typeof data.data.rates.USD !== 'undefined') {
+                    return parseFloat(data.data.rates.USD);
+                }
+                throw new Error('Invalid ETH/USD data from Coinbase API');
+            },
+            elements: {
+                price: document.getElementById('ethusd-current-price'),
+                change: document.getElementById('ethusd-price-change'),
+                percentageChange: document.getElementById('ethusd-percentage-change'),
+                updated: document.getElementById('ethusd-last-updated'),
+                error: document.getElementById('ethusd-error-message'),
+                refreshBtn: document.getElementById('ethusd-refresh-btn'),
+                loader: document.getElementById('ethusd-loader'),
+                card: document.getElementById('ethusd-card'),
+                sparklineId: 'ethusd-sparkline',
+                highDisplay: document.getElementById('ethusd-high'),
+                lowDisplay: document.getElementById('ethusd-low')
+            },
+            displayPrefix: '$', 
+            displaySuffix: '',
+            digits: 2, // Price of ETH in USD
+        },
+        { // NEW EUR/USD Configuration
+            name: 'eurusd',
+            tickerName: 'EUR/USD', // For the ticker bar
+            url: 'https://api.coinbase.com/v2/exchange-rates?currency=EUR',
+            parser: (data) => {
+                // We want 1 EUR = X USD
+                if (data && data.data && data.data.rates && typeof data.data.rates.USD !== 'undefined') {
+                    return parseFloat(data.data.rates.USD);
+                }
+                throw new Error('Invalid EUR/USD data from Coinbase API');
+            },
+            elements: {
+                price: document.getElementById('eurusd-current-price'),
+                change: document.getElementById('eurusd-price-change'),
+                percentageChange: document.getElementById('eurusd-percentage-change'),
+                updated: document.getElementById('eurusd-last-updated'),
+                error: document.getElementById('eurusd-error-message'),
+                refreshBtn: document.getElementById('eurusd-refresh-btn'),
+                loader: document.getElementById('eurusd-loader'),
+                card: document.getElementById('eurusd-card'),
+                sparklineId: 'eurusd-sparkline',
+                highDisplay: document.getElementById('eurusd-high'),
+                lowDisplay: document.getElementById('eurusd-low')
+            },
+            displayPrefix: '$', // The price is how many USD for 1 EUR
+            displaySuffix: '',
+            digits: 4, // Forex pairs usually use 4-5 decimal places
+        },
+        { // NEW Silver/USD (XAG/USD) Configuration
+            name: 'xagusd',
+            tickerName: 'SILVER/USD', // Corrected tickerName to be more specific
+            url: 'https://data-asg.goldprice.org/dbXRates/USD', // Same API as gold
+            parser: (data) => {
+                if (data && data.items && data.items.length > 0 && typeof data.items[0].xagPrice !== 'undefined') {
+                    return parseFloat(data.items[0].xagPrice); // Look for xagPrice
+                }
+                // Fallback if xagPrice is missing but other precious metals are there (less ideal but a check)
+                if (data && data.items && data.items.length > 0 && (data.items[0].xauPrice || data.items[0].xptPrice)){
+                    // If other precious metals are present but not silver, it's a specific "no silver data" case
+                    throw new Error('Silver (XAG/USD) data specifically missing from API response.');
+                }
+                throw new Error('Invalid or missing data structure from goldprice.org API for Silver.');
+            },
+            elements: {
+                price: document.getElementById('xagusd-current-price'),
+                change: document.getElementById('xagusd-price-change'),
+                percentageChange: document.getElementById('xagusd-percentage-change'),
+                updated: document.getElementById('xagusd-last-updated'),
+                error: document.getElementById('xagusd-error-message'),
+                refreshBtn: document.getElementById('xagusd-refresh-btn'),
+                loader: document.getElementById('xagusd-loader'),
+                card: document.getElementById('xagusd-card'),
+                sparklineId: 'xagusd-sparkline',
+                highDisplay: document.getElementById('xagusd-high'),
+                lowDisplay: document.getElementById('xagusd-low'),
+                // changeTooltip: document.getElementById('xagusd-tooltip-text') // Not strictly needed if updateIndividualDisplay derives ID
+            },
+            displayPrefix: '$', 
+            displaySuffix: '',  // Unit "/oz" is in HTML
+            digits: 2,          // Silver price usually to 2 or 3 decimal places
         }
     ];
 
@@ -197,6 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceTickerItemsContainer = document.getElementById('priceTickerItems');
     const priceTickerWrap = document.querySelector('.price-ticker-wrap'); // Get the wrapper
     let tickerAnimationName = 'scrollTickerAnimation'; // Base name for dynamic keyframes
+
+    const chartModalOverlay = document.getElementById('chartModalOverlay');
+    const detailedChartModal = document.getElementById('detailedChartModal');
+    const modalChartTitle = document.getElementById('modalChartTitle');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const detailedChartElement = document.getElementById('detailedApexChart');
+    let detailedChartInstance = null; // To store the modal's ApexCharts instance
 
     // --- Initialize SortableJS for Reordering Cards ---
     if (mainContainer) {
@@ -221,15 +309,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadCardOrder() {
-        const savedOrder = JSON.parse(localStorage.getItem('cardOrder'));
-        if (savedOrder && mainContainer) {
-            savedOrder.forEach(cardId => {
+        const order = JSON.parse(localStorage.getItem('cardOrderV2'));
+        if (order && mainContainer) {
+            // Temporarily detach elements not in the order to preserve them
+            const detachedChildren = [];
+            Array.from(mainContainer.children).forEach(child => {
+                if (!order.includes(child.id)) {
+                    detachedChildren.push(mainContainer.removeChild(child));
+                }
+            });
+
+            order.forEach(cardId => {
                 const cardElement = document.getElementById(cardId);
                 if (cardElement) {
                     mainContainer.appendChild(cardElement);
                 }
             });
+
+            // Re-attach any detached children that were not in the order array (e.g., newly added cards)
+            detachedChildren.forEach(child => mainContainer.appendChild(child));
         }
+        // After reordering, re-attach listeners if necessary, though SortableJS usually preserves them.
+        // However, good to call if any doubt or if elements were truly re-created.
+        setupSparklineClickListeners(); 
     }
 
     // --- Settings Panel Logic ---
@@ -281,20 +383,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadCardVisibility() {
-        const savedVisibility = JSON.parse(localStorage.getItem('cardVisibility'));
-        if (savedVisibility) {
-            cardVisibilityToggles.forEach(toggle => {
-                const cardId = toggle.dataset.cardId;
-                if (savedVisibility.hasOwnProperty(cardId)) {
-                    toggle.checked = savedVisibility[cardId];
-                    const cardElement = document.getElementById(cardId);
-                    if (cardElement) {
-                        cardElement.classList.toggle('hidden-card', !savedVisibility[cardId]);
+        let anyCardStateChanged = false;
+        cardVisibilityToggles.forEach(toggle => {
+            const cardId = toggle.dataset.cardId;
+            const cardElement = document.getElementById(cardId);
+            if (cardElement) {
+                const isVisible = localStorage.getItem(`cardVisible_${cardId}`);
+                if (isVisible === 'false') {
+                    cardElement.classList.add('hidden-card');
+                    toggle.checked = false;
+                    anyCardStateChanged = true;
+                } else { // null or 'true'
+                    cardElement.classList.remove('hidden-card');
+                    toggle.checked = true;
+                    // If visible, try to initialize its sparkline if not already done
+                    const config = apiConfigs.find(c => c.elements && c.elements.card && c.elements.card.id === cardId) || 
+                                   (cardId === 'altintlgr-card' ? { elements: { sparklineId: altinTlGrElements.sparklineId } } : null);
+                    if (config && config.elements && config.elements.sparklineId && !sparklineCharts[config.elements.sparklineId]) {
+                         // Ensure history exists before initializing to prevent error
+                        const itemName = cardId.replace('-card', '').replace('altintlgr', 'altinTlGr'); // Convert cardId to itemName
+                        if (!priceHistories[itemName]) priceHistories[itemName] = []; // Ensure array exists
+                        initializeSparkline(config.elements.sparklineId, priceHistories[itemName]);
                     }
                 }
-            });
-            updatePriceTicker(); // Update ticker after loading visibility states
+            }
+        });
+
+        if (anyCardStateChanged) {
+            // Potentially update layout or sparklines if visibility changed things
+            // For example, if using a masonry layout library or if sparklines need re-initialization
         }
+        updatePriceTicker(); // Update ticker based on visible cards
+        setupSparklineClickListeners(); // Call after visibility might have changed DOM or display properties
     }
 
     // --- Update Interval Logic ---
@@ -425,10 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentPrice = config.parser(data);
             if (isNaN(currentPrice)) { throw new Error('Parsed price is not a number.'); }
             
-            // Update history before display logic
-            priceHistories[config.name].push(currentPrice);
+            const now = new Date().getTime(); // Get current timestamp
+
+            // Store as {x: timestamp, y: price}
+            priceHistories[config.name].push({ x: now, y: currentPrice });
             if (priceHistories[config.name].length > MAX_HISTORY_POINTS) {
-                priceHistories[config.name].shift(); // Remove oldest point
+                priceHistories[config.name].shift();
             }
 
             updateIndividualDisplay(config, currentPrice, previousDisplayPrices[config.name]);
@@ -438,7 +560,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             checkAlerts(config.name, currentPrice);
 
-            if (config.elements.sparklineId) { // Check if sparkline is configured
+            if (config.elements.sparklineId) {
+                // updateSparkline will now receive an array of {x,y} objects
                 updateSparkline(config.elements.sparklineId, priceHistories[config.name]);
             }
 
@@ -495,10 +618,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 altinTlGrElements.change.textContent = '–';
                 altinTlGrElements.change.className = 'neutral';
             } else {
-                priceHistories.altinTlGr.push(goldTryPerGram);
+                const now = new Date().getTime(); // Get current timestamp
+
+                // Store as {x: timestamp, y: price}
+                priceHistories.altinTlGr.push({ x: now, y: goldTryPerGram });
                 if (priceHistories.altinTlGr.length > MAX_HISTORY_POINTS) {
                     priceHistories.altinTlGr.shift();
                 }
+
                 updateIndividualDisplay(
                     { 
                         name: 'altinTlGr', 
@@ -517,10 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     displayPrefix: '₺',
                     digits: 2
                 });
-
                 checkAlerts('altinTlGr', goldTryPerGram);
 
                 if (altinTlGrElements.sparklineId) {
+                    // updateSparkline will now receive an array of {x,y} objects
                     updateSparkline(altinTlGrElements.sparklineId, priceHistories.altinTlGr);
                 }
                 updatePriceTicker(); // Update ticker after ALTIN calculation
@@ -742,7 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initialize Sparkline Chart Function ---
-    function initializeSparkline(chartId, initialData = []) {
+    function initializeSparkline(chartId, initialDataXY = []) {
         const chartElement = document.querySelector(`#${chartId}`);
         if (!chartElement) {
             return null;
@@ -768,7 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             series: [{
                 name: 'Price', // Will not be visible in sparkline usually
-                data: initialData // Array of numbers
+                data: initialDataXY // Pass the array of {x,y} objects
             }],
             stroke: {
                 curve: 'smooth',
@@ -778,27 +905,32 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltip: {
                 enabled: true, // Basic tooltip showing value
                 theme: document.documentElement.getAttribute('data-theme') || 'light', // Match theme
-                x: { show: false }, // Hide x-axis value in tooltip
+                x: {
+                    show: true, // Show timestamp in tooltip
+                    format: 'hh:mm:ss TT', // Format for time
+                },
                 y: {
-                    formatter: function (val, opts) {
-                        let digits = 2; // Default
-                        if (chartId.includes('altin')) digits = 2;
-                        else if (chartId.includes('gold')) digits = 2;
-                        else digits = 4; // usdTry, eurTry
-                        
+                    formatter: function (val, { series, seriesIndex, dataPointIndex, w }) {
+                        // Determine prefix and digits based on chartId or a passed config
+                        let digits = 2;
                         let prefix = '';
-                        if (chartId.includes('gold')) prefix = '$';
-                        else if (chartId.includes('usdtry') || chartId.includes('eurtry') || chartId.includes('altin')) prefix = '₺';
-
-                        return val ? prefix + val.toFixed(digits) : '';
+                        const itemName = chartId.replace('-sparkline', ''); // Extract item name
+                        const itemConfig = apiConfigs.find(c => c.name === itemName) || 
+                                           (itemName === 'altinTlGr' ? { displayPrefix: '₺', digits: 2 } : {});
+                        
+                        prefix = itemConfig.displayPrefix || (itemName.toLowerCase().includes('usd') && !itemName.toLowerCase().includes('try') ? '$' : '');
+                        digits = itemConfig.digits || 2;
+                        
+                        return val ? `${prefix}${val.toFixed(digits)}` : '';
                     }
                 }
             },
-            xaxis: {
-                categories: [], // Not really needed for sparkline view
+            xaxis: { // For sparklines, these are usually hidden, but ApexCharts needs it if data is {x,y}
+                type: 'datetime', // IMPORTANT for {x,y} data
                 labels: { show: false },
                 axisBorder: { show: false },
-                axisTicks: { show: false }
+                axisTicks: { show: false },
+                tooltip: { enabled: false } // Disable x-axis part of general tooltip if not desired
             },
             yaxis: {
                 labels: { show: false }
@@ -831,17 +963,30 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to update sparkline color on theme change
     function updateAllSparklineColors() {
-        const newColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#3498db';
+        const newColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+        const newTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+        const newBorderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
         const newTooltipTheme = document.documentElement.getAttribute('data-theme') || 'light';
+
+        // Update sparklines on cards
         for (const chartId in sparklineCharts) {
-            if (sparklineCharts[chartId] && sparklineCharts[chartId].updateOptions) {
+            if (sparklineCharts[chartId] && typeof sparklineCharts[chartId].updateOptions === 'function') {
                 sparklineCharts[chartId].updateOptions({
                     colors: [newColor],
-                    tooltip: {
-                        theme: newTooltipTheme
-                    }
+                    tooltip: { theme: newTooltipTheme }
                 });
             }
+        }
+
+        // Update detailed chart if it's visible/instantiated
+        if (detailedChartInstance) {
+            detailedChartInstance.updateOptions({
+                colors: [newColor],
+                tooltip: { theme: newTooltipTheme },
+                xaxis: { labels: { style: { colors: newTextColor } } },
+                yaxis: { labels: { style: { colors: newTextColor } } },
+                grid: { borderColor: newBorderColor }
+            });
         }
     }
 
@@ -1127,7 +1272,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let tickerHTML = '';
-        const itemsToDisplay = ['gold', 'usdTry', 'eurTry', 'altinTlGr', 'btcusd'];
+        const itemsToDisplay = ['gold', 'usdTry', 'eurTry', 'altinTlGr', 'btcusd', 'ethusd', 'eurusd', 'xagusd'];
+        let originalContentWidth = 0;
 
         itemsToDisplay.forEach(itemName => {
             const config = apiConfigs.find(c => c.name === itemName) || 
@@ -1135,12 +1281,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!config) return;
 
-            const cardElement = config.card || config.elements.card;
+            const cardElement = config.card || (config.elements && config.elements.card); // Ensure config.elements exists
             if(cardElement && cardElement.classList.contains('hidden-card')) return;
 
             const history = priceHistories[itemName] || [];
-            const currentPriceVal = history.length > 0 ? history[history.length - 1] : null;
-            const previousPriceVal = history.length > 1 ? history[history.length - 2] : null; 
+            // MODIFICATION: Access the 'y' property for current and previous prices
+            const currentPriceDataPoint = history.length > 0 ? history[history.length - 1] : null;
+            const previousPriceDataPoint = history.length > 1 ? history[history.length - 2] : null;
+            
+            const currentPriceVal = currentPriceDataPoint ? currentPriceDataPoint.y : null;
+            const previousPriceVal = previousPriceDataPoint ? previousPriceDataPoint.y : null;
             
             let priceText = '--';
             let changeText = '–';
@@ -1149,9 +1299,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayName = config.tickerName || itemName.toUpperCase(); 
 
             if (currentPriceVal !== null && !isNaN(currentPriceVal)) {
-                priceText = `${config.displayPrefix}${currentPriceVal.toFixed(config.digits)}`;
+                // priceText = `${config.displayPrefix}${currentPriceVal.toFixed(config.digits)}`; // Original problematic line for priceText
                 
-                if (previousPriceVal !== null && previousPriceVal !== 0 && !isNaN(previousPriceVal)) { 
+                if (previousPriceVal !== null && !isNaN(previousPriceVal) && previousPriceVal !== 0) { 
                     const change = currentPriceVal - previousPriceVal;
                     const epsilon = 0.5 * Math.pow(10, -(config.digits || 2));
                     if (change > epsilon) {
@@ -1163,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         changeClass = 'decrease';
                         priceArrow = '▼ ';
                     } else {
-                         changeText = `–`;
+                         changeText = `–`; // No significant change
                          changeClass = 'neutral';
                          priceArrow = '– '; 
                     }
@@ -1224,6 +1374,146 @@ document.addEventListener('DOMContentLoaded', () => {
                     priceTickerWrap.style.animation = 'none';
                 }
             }
+        });
+    }
+
+    // --- Function to Show/Hide Modal ---
+    function toggleDetailedChartModal(show, itemName = null) {
+        if (show && itemName) {
+            const config = apiConfigs.find(c => c.name === itemName) ||
+                           (itemName === 'altinTlGr' ? { name: 'altinTlGr', tickerName: 'ALTIN (TL/GR)', displayPrefix: '₺', digits: 2 } : null);
+            
+            if (!config || !priceHistories[itemName] || priceHistories[itemName].length === 0) {
+                console.warn("No data or config to show detailed chart for", itemName);
+                return;
+            }
+
+            modalChartTitle.textContent = `Detailed Chart: ${config.tickerName || itemName.toUpperCase()}`;
+            renderDetailedChart(itemName, priceHistories[itemName], config);
+
+            detailedChartModal.classList.add('visible');
+            chartModalOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+        } else {
+            detailedChartModal.classList.remove('visible');
+            chartModalOverlay.classList.remove('visible');
+            document.body.style.overflow = ''; // Restore background scroll
+            if (detailedChartInstance) {
+                detailedChartInstance.destroy(); // Destroy chart to free resources
+                detailedChartInstance = null;
+            }
+        }
+    }
+
+    // --- Function to Render Detailed Chart in Modal ---
+    function renderDetailedChart(itemName, dataXY, itemConfig) {
+        if (detailedChartInstance) {
+            detailedChartInstance.destroy();
+        }
+
+        // dataXY already contains {x: timestamp, y: price}
+        const seriesData = dataXY.slice(-MAX_HISTORY_POINTS); // Or use full dataXY if preferred
+
+        const options = {
+            chart: {
+                type: 'line',
+                height: '100%', // Fill modal body
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    },
+                },
+                zoom: { enabled: true },
+                animations: { enabled: true, dynamicAnimation: { speed: 300 } } // Enable smoother updates
+            },
+            series: [{
+                name: itemConfig.tickerName || itemName.toUpperCase(),
+                data: seriesData // Pass the array of {x,y} objects
+            }],
+            colors: [getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#3498db'],
+            stroke: {
+                curve: 'smooth',
+                width: 2
+            },
+            xaxis: {
+                type: 'datetime', // VERY IMPORTANT: Set x-axis type to datetime
+                labels: {
+                    show: true, // Show x-axis labels (timestamps)
+                    datetimeUTC: false, // Display in local time
+                    format: 'hh:mm:ss TT', // Format for the labels e.g., 03:30:15 PM
+                    style: {
+                        colors: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+                    },
+                },
+                tooltip: { // Tooltip for x-axis can show more detail if desired
+                    enabled: true,
+                    formatter: function(val) {
+                        return new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+                    },
+                    formatter: function (val) {
+                        return `${itemConfig.displayPrefix || ''}${val.toFixed(itemConfig.digits || 2)}`;
+                    }
+                }
+            },
+            tooltip: {
+                theme: document.documentElement.getAttribute('data-theme') || 'light',
+                x: {
+                    format: 'hh:mm:ss TT dd MMM' // More detailed format for tooltip header
+                },
+                y: {
+                    formatter: function (val) {
+                        return `${itemConfig.displayPrefix || ''}${val.toFixed(itemConfig.digits || 2)}`;
+                    }
+                }
+            },
+            grid: {
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+                row: {
+                    colors: ['transparent', 'transparent'], // transparent or themed
+                    opacity: 0.5
+                },
+            },
+            dataLabels: { enabled: false }
+        };
+
+        detailedChartInstance = new ApexCharts(detailedChartElement, options);
+        detailedChartInstance.render();
+    }
+
+    // --- Event Listeners for Modal ---
+    if(modalCloseBtn) modalCloseBtn.addEventListener('click', () => toggleDetailedChartModal(false));
+    if(chartModalOverlay) chartModalOverlay.addEventListener('click', () => toggleDetailedChartModal(false));
+
+    // --- Function to Setup Sparkline Click Listeners ---
+    function setupSparklineClickListeners() {
+        const clickableSparklines = document.querySelectorAll('.clickable-sparkline');
+        clickableSparklines.forEach(container => {
+            // Remove old listener before adding new one, to prevent duplicates if called multiple times
+            const oldListener = container._sparklineClickListener;
+            if (oldListener) {
+                container.removeEventListener('click', oldListener);
+            }
+            
+            const newListener = () => {
+                const itemName = container.dataset.itemName;
+                toggleDetailedChartModal(true, itemName);
+            };
+            container.addEventListener('click', newListener);
+            container._sparklineClickListener = newListener; // Store reference for potential removal
         });
     }
 
@@ -1310,6 +1600,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePriceTicker(); // Initial call to populate ticker
         startMainInterval();
+
+        // Initialize SortableJS after cards are potentially reordered and visibility set
+        if (mainContainer) {
+            Sortable.create(mainContainer, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: saveCardOrder
+            });
+        }
+        setupCloseCardButtons(); // Call to set up new close buttons
+        setupSparklineClickListeners(); // Add this AFTER cards are in the DOM
+    }
+
+    // Helper function to handle card closing logic
+    function closeCard(cardElement) {
+        if (!cardElement) return;
+        const cardId = cardElement.id;
+        cardElement.classList.add('hidden-card');
+
+        const settingsToggle = document.querySelector(`.card-visibility-toggle[data-card-id="${cardId}"]`);
+        if (settingsToggle) {
+            settingsToggle.checked = false;
+        }
+        saveCardVisibility(); 
+        updatePriceTicker(); // Update ticker as a card is hidden
+    }
+
+    // Event listeners for the new close buttons on cards
+    function setupCloseCardButtons() {
+        const closeButtons = document.querySelectorAll('.close-card-btn');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const card = event.target.closest('.price-card');
+                if (card) {
+                    closeCard(card);
+                }
+            });
+        });
     }
 
     initializeApp();

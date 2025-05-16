@@ -30,7 +30,7 @@
 </head>
 <body>
     <div class="app-header">
-        <h1>Piyasa AI</h1>
+        <h1><i class="fas fa-chart-line"></i> Piyasa AI</h1>
         <div class="controls">
             <button id="settings-toggle-btn" title="Settings"><i class="fas fa-cog"></i></button>
             <button id="compact-view-toggle" title="Toggle Compact View"><i class="fas fa-compress-alt"></i></button>
@@ -64,6 +64,9 @@
             <label><input type="checkbox" class="card-visibility-toggle" data-card-id="eurtry-card" checked> EUR/TRY</label>
             <label><input type="checkbox" class="card-visibility-toggle" data-card-id="altintlgr-card" checked> ALTIN (TL/GR)</label>
             <label><input type="checkbox" class="card-visibility-toggle" data-card-id="btcusd-card" checked> BTC/USD</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="ethusd-card" checked> ETH/USD</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="eurusd-card" checked> EUR/USD</label>
+            <label><input type="checkbox" class="card-visibility-toggle" data-card-id="xagusd-card" checked> Silver/USD</label>
         </div>
         <div class="settings-section">
             <h3>Update Interval:</h3>
@@ -83,6 +86,9 @@
                     <option value="eurTry">EUR/TRY</option>
                     <option value="altinTlGr">ALTIN (TL/GR)</option>
                     <option value="btcusd">BTC/USD</option>
+                    <option value="ethusd">ETH/USD</option>
+                    <option value="eurusd">EUR/USD</option>
+                    <option value="xagusd">Silver/USD</option>
                 </select>
                 <select id="alert-condition-select">
                     <option value="above">Price Above > </option>
@@ -101,7 +107,12 @@
 
     <div class="main-container" id="mainContainer">
         <div class="price-card" id="gold-card">
-            <h1><i class="fas fa-coins"></i> Gold Price</h1>
+            <div class="card-header-controls">
+                <h1><i class="fas fa-coins"></i> Gold Price</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
             <div class="price-display">
                 <span class="value" id="gold-current-price">$----.--</span><span class="unit"> /oz</span>
                 <div class="loader" id="gold-loader"></div>
@@ -113,7 +124,7 @@
                 <span class="tooltiptext" id="gold-tooltip-text">Previous: $----.--</span>
             </div>
             <!-- Sparkline Chart Area -->
-            <div class="sparkline-chart-container">
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="gold">
                 <div id="gold-sparkline" class="sparkline"></div>
             </div>
             <button class="refresh-btn" id="gold-refresh-btn" title="Refresh Gold"><i class="fas fa-sync-alt"></i></button>
@@ -131,7 +142,12 @@
         </div>
 
         <div class="price-card" id="usdtry-card">
-            <h1><i class="fas fa-dollar-sign"></i> USD / TRY</h1>
+            <div class="card-header-controls">
+                <h1><i class="fas fa-dollar-sign"></i> USD / TRY</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
             <div class="price-display">
                 <span class="value" id="usdtry-current-price">₺--.----</span><span class="unit"></span>
                 <div class="loader" id="usdtry-loader"></div>
@@ -143,7 +159,7 @@
                 <span class="tooltiptext" id="usdTry-tooltip-text">Previous: ₺--.----</span>
             </div>
             <!-- Sparkline Chart Area -->
-            <div class="sparkline-chart-container">
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="usdTry">
                 <div id="usdtry-sparkline" class="sparkline"></div>
             </div>
             <button class="refresh-btn" id="usdtry-refresh-btn" title="Refresh USD/TRY"><i class="fas fa-sync-alt"></i></button>
@@ -161,7 +177,12 @@
         </div>
 
         <div class="price-card" id="eurtry-card">
-            <h1><i class="fas fa-euro-sign"></i> EUR / TRY</h1>
+            <div class="card-header-controls">
+                <h1><i class="fas fa-euro-sign"></i> EUR / TRY</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
             <div class="price-display">
                 <span class="value" id="eurtry-current-price">₺--.----</span><span class="unit"></span>
                 <div class="loader" id="eurtry-loader"></div>
@@ -173,7 +194,7 @@
                 <span class="tooltiptext" id="eurTry-tooltip-text">Previous: ₺--.----</span>
             </div>
             <!-- Sparkline Chart Area -->
-            <div class="sparkline-chart-container">
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="eurTry">
                 <div id="eurtry-sparkline" class="sparkline"></div>
             </div>
             <button class="refresh-btn" id="eurtry-refresh-btn" title="Refresh EUR/TRY"><i class="fas fa-sync-alt"></i></button>
@@ -191,7 +212,12 @@
         </div>
 
         <div class="price-card" id="altintlgr-card">
-            <h1><i class="fas fa-ring"></i> ALTIN (TL/GR)</h1>
+            <div class="card-header-controls">
+                <h1><i class="fas fa-ring"></i> ALTIN (TL/GR)</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
             <div class="price-display">
                 <span class="value" id="altintlgr-current-price">₺---.--</span><span class="unit"> /gr</span>
                 <div class="loader" id="altintlgr-loader"></div>
@@ -203,7 +229,7 @@
                 <span class="tooltiptext" id="altinTlGr-tooltip-text">Previous: ₺---.--</span>
             </div>
             <!-- Sparkline Chart Area -->
-            <div class="sparkline-chart-container">
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="altinTlGr">
                 <div id="altintlgr-sparkline" class="sparkline"></div>
             </div>
             <button class="refresh-btn" id="altintlgr-refresh-btn" title="Refresh ALTIN/GR"><i class="fas fa-sync-alt"></i></button>
@@ -221,7 +247,12 @@
         </div>
 
         <div class="price-card" id="btcusd-card">
-            <h1><i class="fab fa-btc"></i> BTC / USD</h1>
+            <div class="card-header-controls">
+                <h1><i class="fab fa-btc"></i> BTC / USD</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
             <div class="price-display">
                 <span class="value" id="btcusd-current-price">$-----.--</span><span class="unit"></span>
                 <div class="loader" id="btcusd-loader"></div>
@@ -232,7 +263,7 @@
                 <span id="btcusd-percentage-change" class="percentage-change neutral">(---%)</span>
                 <span class="tooltiptext" id="btcusd-tooltip-text">Previous: $-----.--</span>
             </div>
-            <div class="sparkline-chart-container">
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="btcusd">
                 <div id="btcusd-sparkline" class="sparkline"></div>
             </div>
             <button class="refresh-btn" id="btcusd-refresh-btn" title="Refresh BTC/USD"><i class="fas fa-sync-alt"></i></button>
@@ -245,6 +276,113 @@
                 <span id="btcusd-high" class="high-value">H: --</span>
                 <span id="btcusd-low" class="low-value">L: --</span>
             </div>
+        </div>
+
+        <div class="price-card" id="ethusd-card">
+            <div class="card-header-controls">
+                <h1><i class="fab fa-ethereum"></i> ETH / USD</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="price-display">
+                <span class="value" id="ethusd-current-price">$----.--</span><span class="unit"></span>
+                <div class="loader" id="ethusd-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="ethusd-price-change" class="neutral">--</span>
+                <span id="ethusd-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="ethusd-tooltip-text">Previous: $----.--</span>
+            </div>
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="ethusd">
+                <div id="ethusd-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="ethusd-refresh-btn" title="Refresh ETH/USD"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="ethusd-last-updated">Never</span>
+            </div>
+            <div id="ethusd-error-message" class="error"></div>
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="ethusd-high" class="high-value">H: --</span>
+                <span id="ethusd-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="eurusd-card">
+            <div class="card-header-controls">
+                <h1><i class="fas fa-euro-sign"></i> EUR / USD <i class="fas fa-dollar-sign" style="font-size: 0.8em; opacity: 0.7;"></i></h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="price-display">
+                <span class="value" id="eurusd-current-price">$ -.----</span><span class="unit"></span>
+                <div class="loader" id="eurusd-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="eurusd-price-change" class="neutral">--</span>
+                <span id="eurusd-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="eurusd-tooltip-text">Previous: $ -.----</span>
+            </div>
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="eurusd">
+                <div id="eurusd-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="eurusd-refresh-btn" title="Refresh EUR/USD"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="eurusd-last-updated">Never</span>
+            </div>
+            <div id="eurusd-error-message" class="error"></div>
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="eurusd-high" class="high-value">H: --</span>
+                <span id="eurusd-low" class="low-value">L: --</span>
+            </div>
+        </div>
+
+        <div class="price-card" id="xagusd-card">
+            <div class="card-header-controls">
+                <h1><i class="fas fa-ring"></i> Silver / USD</h1>
+                <div class="compact-card-close-wrapper">
+                    <button class="close-card-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="price-display">
+                <span class="value" id="xagusd-current-price">$---.--</span><span class="unit"> /oz</span>
+                <div class="loader" id="xagusd-loader"></div>
+            </div>
+            <div class="change-display tooltip">
+                Change: 
+                <span id="xagusd-price-change" class="neutral">--</span>
+                <span id="xagusd-percentage-change" class="percentage-change neutral">(---%)</span>
+                <span class="tooltiptext" id="xagusd-tooltip-text">Previous: $---.--</span>
+            </div>
+            <div class="sparkline-chart-container clickable-sparkline" data-item-name="xagusd">
+                <div id="xagusd-sparkline" class="sparkline"></div>
+            </div>
+            <button class="refresh-btn" id="xagusd-refresh-btn" title="Refresh Silver/USD"><i class="fas fa-sync-alt"></i></button>
+            <div class="timestamp tooltip">
+                Last updated: <span id="xagusd-last-updated">Never</span>
+            </div>
+            <div id="xagusd-error-message" class="error"></div>
+            <div class="high-low-display">
+                <span class="label">Session H/L:</span>
+                <span id="xagusd-high" class="high-value">H: --</span>
+                <span id="xagusd-low" class="low-value">L: --</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="chartModalOverlay"></div>
+    <div class="modal" id="detailedChartModal">
+        <div class="modal-header">
+            <h3 id="modalChartTitle">Detailed Chart</h3>
+            <button class="modal-close-btn" id="modalCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="detailedApexChart" style="min-height: 300px;"></div>
         </div>
     </div>
 
