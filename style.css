@@ -93,11 +93,6 @@ body {
     font-weight: 700;
     font-size: 2em;
 }
-.app-header h1 .header-icon {
-    margin-right: 10px;
-    color: var(--accent-color);
-    vertical-align: -0.125em; /* Adjust for better alignment with text */
-}
 
 /* Header Controls */
 .app-header .controls {
@@ -221,7 +216,7 @@ body {
 .price-card .price-display .value.neutral {
     color: var(--text-primary); /* Explicitly set neutral to primary text color */
 }
-.price-card .price-display .unit {
+.price-card .price-display .value.unit {
     font-size: 0.5em; /* Smaller unit text */
     font-weight: normal;
     color: var(--text-secondary); /* Theme color for units */
