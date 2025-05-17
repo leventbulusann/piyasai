@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const OUNCES_TO_GRAMS = 31.1034768;
     const MAX_HISTORY_POINTS = 20; // Number of data points for sparklines
 
+    // Constants for Trend Indicators
+    const SMA_SHORT_PERIOD = 5;
+    const SMA_LONG_PERIOD = 10; // Ensure SMA_LONG_PERIOD <= MAX_HISTORY_POINTS
+    const ROC_PERIOD = 5;       // Ensure ROC_PERIOD < MAX_HISTORY_POINTS (needs ROC_PERIOD + 1 points)
+
     // Modified previousPrices to store arrays for history
     let priceHistories = {
         gold: [], usdTry: [], eurTry: [], altinTlGr: [], btcusd: [],
@@ -58,7 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         card: document.getElementById('altintlgr-card'),
         sparklineId: 'altintlgr-sparkline',
         highDisplay: document.getElementById('altintlgr-high'),
-        lowDisplay: document.getElementById('altintlgr-low')
+        lowDisplay: document.getElementById('altintlgr-low'),
+        trendIndicatorText: document.getElementById('altintlgr-trend-indicator')?.querySelector('.indicator-text'),
+        momentumIndicatorText: document.getElementById('altintlgr-momentum-indicator')?.querySelector('.indicator-text')
     };
 
     let currentFetchedValues = {
@@ -88,7 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('gold-card'),
                 sparklineId: 'gold-sparkline',
                 highDisplay: document.getElementById('gold-high'),
-                lowDisplay: document.getElementById('gold-low')
+                lowDisplay: document.getElementById('gold-low'),
+                trendIndicatorText: document.getElementById('gold-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('gold-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '$',
             displaySuffix: '',
@@ -116,7 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('usdtry-card'),
                 sparklineId: 'usdtry-sparkline',
                 highDisplay: document.getElementById('usdtry-high'),
-                lowDisplay: document.getElementById('usdtry-low')
+                lowDisplay: document.getElementById('usdtry-low'),
+                trendIndicatorText: document.getElementById('usdtry-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('usdtry-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '₺',
             displaySuffix: '',
@@ -144,7 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('eurtry-card'),
                 sparklineId: 'eurtry-sparkline',
                 highDisplay: document.getElementById('eurtry-high'),
-                lowDisplay: document.getElementById('eurtry-low')
+                lowDisplay: document.getElementById('eurtry-low'),
+                trendIndicatorText: document.getElementById('eurtry-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('eurtry-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '₺',
             displaySuffix: '',
@@ -171,15 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('btcusd-card'),
                 sparklineId: 'btcusd-sparkline',
                 highDisplay: document.getElementById('btcusd-high'),
-                lowDisplay: document.getElementById('btcusd-low')
+                lowDisplay: document.getElementById('btcusd-low'),
+                trendIndicatorText: document.getElementById('btcusd-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('btcusd-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '$',
             displaySuffix: '',
             digits: 2
         },
-        { // NEW ETH/USD Configuration
+        {
             name: 'ethusd',
-            tickerName: 'ETH/USD', // For the ticker bar - corrected tickerName
+            tickerName: 'ETH/USD',
             url: 'https://api.coinbase.com/v2/exchange-rates?currency=ETH',
             parser: (data) => {
                 if (data && data.data && data.data.rates && typeof data.data.rates.USD !== 'undefined') {
@@ -198,18 +213,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('ethusd-card'),
                 sparklineId: 'ethusd-sparkline',
                 highDisplay: document.getElementById('ethusd-high'),
-                lowDisplay: document.getElementById('ethusd-low')
+                lowDisplay: document.getElementById('ethusd-low'),
+                trendIndicatorText: document.getElementById('ethusd-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('ethusd-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '$', 
             displaySuffix: '',
-            digits: 2, // Price of ETH in USD
+            digits: 2,
         },
-        { // NEW EUR/USD Configuration
+        {
             name: 'eurusd',
-            tickerName: 'EUR/USD', // For the ticker bar
+            tickerName: 'EUR/USD',
             url: 'https://api.coinbase.com/v2/exchange-rates?currency=EUR',
             parser: (data) => {
-                // We want 1 EUR = X USD
                 if (data && data.data && data.data.rates && typeof data.data.rates.USD !== 'undefined') {
                     return parseFloat(data.data.rates.USD);
                 }
@@ -226,23 +242,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 card: document.getElementById('eurusd-card'),
                 sparklineId: 'eurusd-sparkline',
                 highDisplay: document.getElementById('eurusd-high'),
-                lowDisplay: document.getElementById('eurusd-low')
+                lowDisplay: document.getElementById('eurusd-low'),
+                trendIndicatorText: document.getElementById('eurusd-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('eurusd-momentum-indicator')?.querySelector('.indicator-text')
             },
-            displayPrefix: '$', // The price is how many USD for 1 EUR
+            displayPrefix: '$',
             displaySuffix: '',
-            digits: 4, // Forex pairs usually use 4-5 decimal places
+            digits: 4,
         },
-        { // NEW Silver/USD (XAG/USD) Configuration
+        {
             name: 'xagusd',
-            tickerName: 'SILVER/USD', // Corrected tickerName to be more specific
-            url: 'https://data-asg.goldprice.org/dbXRates/USD', // Same API as gold
+            tickerName: 'SILVER/USD',
+            url: 'https://data-asg.goldprice.org/dbXRates/USD',
             parser: (data) => {
                 if (data && data.items && data.items.length > 0 && typeof data.items[0].xagPrice !== 'undefined') {
-                    return parseFloat(data.items[0].xagPrice); // Look for xagPrice
+                    return parseFloat(data.items[0].xagPrice);
                 }
-                // Fallback if xagPrice is missing but other precious metals are there (less ideal but a check)
                 if (data && data.items && data.items.length > 0 && (data.items[0].xauPrice || data.items[0].xptPrice)){
-                    // If other precious metals are present but not silver, it's a specific "no silver data" case
                     throw new Error('Silver (XAG/USD) data specifically missing from API response.');
                 }
                 throw new Error('Invalid or missing data structure from goldprice.org API for Silver.');
@@ -259,11 +275,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 sparklineId: 'xagusd-sparkline',
                 highDisplay: document.getElementById('xagusd-high'),
                 lowDisplay: document.getElementById('xagusd-low'),
-                // changeTooltip: document.getElementById('xagusd-tooltip-text') // Not strictly needed if updateIndividualDisplay derives ID
+                trendIndicatorText: document.getElementById('xagusd-trend-indicator')?.querySelector('.indicator-text'),
+                momentumIndicatorText: document.getElementById('xagusd-momentum-indicator')?.querySelector('.indicator-text')
             },
             displayPrefix: '$', 
-            displaySuffix: '',  // Unit "/oz" is in HTML
-            digits: 2,          // Silver price usually to 2 or 3 decimal places
+            displaySuffix: '',  
+            digits: 2, 
         }
     ];
 
@@ -493,6 +510,78 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // --- Helper Functions for Indicators ---
+    function calculateSMA(pricesOnlyArray, period) {
+        if (!pricesOnlyArray || pricesOnlyArray.length < period) return null;
+        const relevantPrices = pricesOnlyArray.slice(-period);
+        const sum = relevantPrices.reduce((acc, p) => acc + p, 0);
+        return sum / period;
+    }
+
+    function calculateROC(pricesOnlyArray, period) {
+        // Needs 'period' number of intervals, so 'period + 1' data points
+        if (!pricesOnlyArray || pricesOnlyArray.length < period + 1) return null;
+        const currentPrice = pricesOnlyArray[pricesOnlyArray.length - 1];
+        const pastPrice = pricesOnlyArray[pricesOnlyArray.length - 1 - period];
+        if (pastPrice === null || isNaN(pastPrice) || pastPrice === 0) return null; // Avoid division by zero or with NaN
+        return ((currentPrice - pastPrice) / pastPrice) * 100; // As a percentage
+    }
+
+    // --- Function to Update Trend Indicators ---
+    function updateTrendIndicators(itemName, itemConfig) {
+        const history = priceHistories[itemName];
+        const trendElement = itemConfig.elements.trendIndicatorText;
+        const momentumElement = itemConfig.elements.momentumIndicatorText;
+
+        if (!history || !trendElement || !momentumElement || !itemConfig.elements.card || itemConfig.elements.card.classList.contains('hidden-card')) {
+            if (trendElement && (!history || history.length === 0)) trendElement.textContent = '--';
+            if (momentumElement && (!history || history.length === 0)) momentumElement.textContent = '--';
+            if (trendElement) trendElement.className = 'indicator-text neutral';
+            if (momentumElement) momentumElement.className = 'indicator-text neutral';
+            return;
+        }
+
+        const pricesOnly = history.map(dp => dp.y);
+
+        // SMA Trend
+        const smaShort = calculateSMA(pricesOnly, SMA_SHORT_PERIOD);
+        const smaLong = calculateSMA(pricesOnly, SMA_LONG_PERIOD);
+
+        if (smaShort !== null && smaLong !== null) {
+            if (smaShort > smaLong) {
+                trendElement.textContent = '▲';
+                trendElement.className = 'indicator-text increase';
+            } else if (smaShort < smaLong) {
+                trendElement.textContent = '▼';
+                trendElement.className = 'indicator-text decrease';
+            } else {
+                trendElement.textContent = '–';
+                trendElement.className = 'indicator-text neutral';
+            }
+        } else {
+            trendElement.textContent = 'N/A'; // Not enough data
+            trendElement.className = 'indicator-text neutral';
+        }
+
+        // ROC Momentum
+        const roc = calculateROC(pricesOnly, ROC_PERIOD);
+        if (roc !== null) {
+            if (roc > 0) {
+                momentumElement.textContent = `+${roc.toFixed(2)}%`;
+                momentumElement.className = 'indicator-text increase';
+            } else if (roc < 0) {
+                momentumElement.textContent = `${roc.toFixed(2)}%`;
+                momentumElement.className = 'indicator-text decrease';
+            } else {
+                momentumElement.textContent = '0.00%';
+                momentumElement.className = 'indicator-text neutral';
+            }
+        } else {
+            momentumElement.textContent = 'N/A'; // Not enough data
+            momentumElement.className = 'indicator-text neutral';
+        }
+    }
+    
     // --- setLoadingState, fetchApiData, calculateAndDisplayAltinTlGr, updateIndividualDisplay (largely from previous, with minor adjustments if needed) ---
     function setLoadingState(elements, isLoading) {
         if (elements.card && elements.loader && elements.refreshBtn) {
@@ -515,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- fetchApiData (Integrate updateTrendIndicators) ---
     async function fetchApiData(config, isManualTrigger = false) {
         // Data for all cards is fetched. updateIndividualDisplay will handle not updating DOM for hidden cards.
         if (config.elements.error && !config.elements.card.classList.contains('hidden-card')) {
@@ -542,12 +632,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(apiErrorMsg);
             }
             const data = await response.json();
-            const currentPrice = config.parser(data);
+            const currentPrice = config.parser(data); 
             if (isNaN(currentPrice)) { throw new Error('Parsed price is not a number.'); }
             
-            const now = new Date().getTime(); // Get current timestamp
-
-            // Store as {x: timestamp, y: price}
+            const now = new Date().getTime();
             priceHistories[config.name].push({ x: now, y: currentPrice });
             if (priceHistories[config.name].length > MAX_HISTORY_POINTS) {
                 priceHistories[config.name].shift();
@@ -555,27 +643,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateIndividualDisplay(config, currentPrice, previousDisplayPrices[config.name]);
             previousDisplayPrices[config.name] = currentPrice;
-
             updateSessionHighLow(config.name, currentPrice, config);
-
             checkAlerts(config.name, currentPrice);
 
             if (config.elements.sparklineId) {
-                // updateSparkline will now receive an array of {x,y} objects
                 updateSparkline(config.elements.sparklineId, priceHistories[config.name]);
             }
+
+            updateTrendIndicators(config.name, config); // CALL NEW FUNCTION HERE
 
             if (config.valueKeyForCalculation) {
                 currentFetchedValues[config.valueKeyForCalculation] = currentPrice;
             }
-            updatePriceTicker(); // Update ticker after any direct fetch
+            // updatePriceTicker(); // This was here, ensure it's still needed or moved to finally
         } catch (error) {
             console.error(`Failed to fetch ${config.name}:`, error);
-            if (!config.elements.card.classList.contains('hidden-card')) { // Only show error if card is visible
+            if (!config.elements.card.classList.contains('hidden-card')) { 
                 config.elements.error.textContent = `Error: ${error.message}`;
             }
             if (config.valueKeyForCalculation) {
                 currentFetchedValues[config.valueKeyForCalculation] = null;
+            }
+            // Ensure trend indicators are reset or show error state if fetch fails
+            if (config.elements && config.elements.trendIndicatorText) {
+                config.elements.trendIndicatorText.textContent = 'Error';
+                config.elements.trendIndicatorText.className = 'indicator-text neutral';
+            }
+            if (config.elements && config.elements.momentumIndicatorText) {
+                config.elements.momentumIndicatorText.textContent = 'Error';
+                config.elements.momentumIndicatorText.className = 'indicator-text neutral';
             }
             updatePriceTicker(); // Also update ticker if API fetch fails
         } finally {
@@ -585,10 +681,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (config.valueKeyForCalculation) {
                  calculateAndDisplayAltinTlGr(); 
             }
-            updatePriceTicker(); // Update ticker after any fetch operation
+            updatePriceTicker(); // Good place for this
         }
     }
 
+    // --- calculateAndDisplayAltinTlGr (Integrate updateTrendIndicators) ---
     function calculateAndDisplayAltinTlGr() {
         const altinCardElement = altinTlGrElements.card;
         if (altinCardElement.classList.contains('hidden-card')) {
@@ -597,6 +694,15 @@ document.addEventListener('DOMContentLoaded', () => {
             altinTlGrElements.change.textContent = '–';
             altinTlGrElements.change.className = 'neutral';
             altinTlGrElements.error.textContent = 'ALTIN/GR card is hidden.';
+            // Clear trend indicators if ALTIN/GR card is hidden too
+            if (altinTlGrElements.trendIndicatorText) {
+                altinTlGrElements.trendIndicatorText.textContent = '--';
+                altinTlGrElements.trendIndicatorText.className = 'indicator-text neutral';
+            }
+            if (altinTlGrElements.momentumIndicatorText) {
+                altinTlGrElements.momentumIndicatorText.textContent = '--';
+                altinTlGrElements.momentumIndicatorText.className = 'indicator-text neutral';
+            }
             return;
         }
 
@@ -617,16 +723,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 altinTlGrElements.price.textContent = '₺---.--';
                 altinTlGrElements.change.textContent = '–';
                 altinTlGrElements.change.className = 'neutral';
+                // Clear trend indicators on calculation error
+                if (altinTlGrElements.trendIndicatorText) {
+                    altinTlGrElements.trendIndicatorText.textContent = 'Error';
+                    altinTlGrElements.trendIndicatorText.className = 'indicator-text neutral';
+                }
+                if (altinTlGrElements.momentumIndicatorText) {
+                    altinTlGrElements.momentumIndicatorText.textContent = 'Error';
+                    altinTlGrElements.momentumIndicatorText.className = 'indicator-text neutral';
+                }
             } else {
-                const now = new Date().getTime(); // Get current timestamp
-
-                // Store as {x: timestamp, y: price}
+                const now = new Date().getTime();
                 priceHistories.altinTlGr.push({ x: now, y: goldTryPerGram });
                 if (priceHistories.altinTlGr.length > MAX_HISTORY_POINTS) {
                     priceHistories.altinTlGr.shift();
                 }
-
-                updateIndividualDisplay(
+                updateIndividualDisplay( 
                     { 
                         name: 'altinTlGr', 
                         elements: altinTlGrElements, 
@@ -638,19 +750,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     previousDisplayPrices.altinTlGr
                 );
                 previousDisplayPrices.altinTlGr = goldTryPerGram;
-                
-                updateSessionHighLow('altinTlGr', goldTryPerGram, {
+                updateSessionHighLow('altinTlGr', goldTryPerGram, { 
                     elements: altinTlGrElements,
                     displayPrefix: '₺',
                     digits: 2
-                });
+                 });
                 checkAlerts('altinTlGr', goldTryPerGram);
-
-                if (altinTlGrElements.sparklineId) {
-                    // updateSparkline will now receive an array of {x,y} objects
+                if (altinTlGrElements.sparklineId) { 
                     updateSparkline(altinTlGrElements.sparklineId, priceHistories.altinTlGr);
-                }
-                updatePriceTicker(); // Update ticker after ALTIN calculation
+                 }
+                
+                updateTrendIndicators('altinTlGr', { elements: altinTlGrElements, card: altinTlGrElements.card }); // CALL NEW FUNCTION HERE
             }
         } else {
             setLoadingState(altinTlGrElements, true);
@@ -672,12 +782,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (isGoldDataAvailable && !isUsdDataAvailable) altinTlGrElements.error.textContent = 'Refreshing... (Waiting for USD/TRY data)';
                 }
             }
-            // Clear sparkline for ALTIN/GR if data is not available to calculate
             if (altinTlGrElements.sparklineId) {
-                 updateSparkline(altinTlGrElements.sparklineId, []); // Empty array to clear sparkline
+                 updateSparkline(altinTlGrElements.sparklineId, []); 
             }
-            updatePriceTicker(); // Also update ticker if ALTIN cannot be calculated yet
+            // Clear trend indicators if ALTIN/GR can't be calculated
+            if (altinTlGrElements.trendIndicatorText) {
+                altinTlGrElements.trendIndicatorText.textContent = '--';
+                altinTlGrElements.trendIndicatorText.className = 'indicator-text neutral';
+            }
+            if (altinTlGrElements.momentumIndicatorText) {
+                altinTlGrElements.momentumIndicatorText.textContent = '--';
+                altinTlGrElements.momentumIndicatorText.className = 'indicator-text neutral';
+            }
         }
+        updatePriceTicker(); // Good place for this
     }
 
     function updateIndividualDisplay(itemConfig, currentPrice, lastDisplayedPrice) {
@@ -1517,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- INITIALIZATION (Modified) ---
+    // --- INITIALIZATION (`initializeApp`) ---
     function initializeApp() {
         // Reset sessionHighLow on fresh load and update placeholders
         for (const itemName in sessionHighLow) {
@@ -1540,32 +1658,38 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCardVisibility();
         loadUpdateInterval(); 
 
-        // Initialize theme (this will also call updateAllSparklineColors via setTheme)
         const LSSavedTheme = localStorage.getItem('theme') || 'light';
         setTheme(LSSavedTheme);
         
-        // Compact view initialization
         const LSSavedCompactView = localStorage.getItem('compactView') === 'true';
         if (LSSavedCompactView && mainContainer && compactViewToggleBtn) {
             mainContainer.classList.add('compact-view');
             compactViewToggleBtn.innerHTML = '<i class="fas fa-expand-alt"></i>';
             compactViewToggleBtn.title = 'Switch to Normal View';
-        } else if (compactViewToggleBtn) { // Ensure button text is correct if not compact
+        } else if (compactViewToggleBtn) { 
             compactViewToggleBtn.innerHTML = '<i class="fas fa-compress-alt"></i>';
             compactViewToggleBtn.title = 'Switch to Compact View';
         }
 
-        // Initialize sparklines for all configured cards AFTER theme is set
         apiConfigs.forEach(config => {
             if (config.elements.sparklineId && !config.elements.card.classList.contains('hidden-card')) {
                 initializeSparkline(config.elements.sparklineId, priceHistories[config.name]);
             }
         });
-        if (altinTlGrElements.sparklineId && !altinTlGrElements.card.classList.contains('hidden-card')) { // For ALTIN/TLGR
+        if (altinTlGrElements.sparklineId && !altinTlGrElements.card.classList.contains('hidden-card')) { 
             initializeSparkline(altinTlGrElements.sparklineId, priceHistories.altinTlGr);
         }
+        
+        // Initial call to set trend indicators to default/placeholder state for all cards
+        apiConfigs.forEach(config => {
+            if (config.elements && (config.elements.trendIndicatorText || config.elements.momentumIndicatorText)) { // Check if elements exist
+                updateTrendIndicators(config.name, config);
+            }
+        });
+        if (altinTlGrElements.trendIndicatorText || altinTlGrElements.momentumIndicatorText) { // For ALTIN/GR
+             updateTrendIndicators('altinTlGr', { elements: altinTlGrElements, card: altinTlGrElements.card });
+        }
 
-        // Modify card visibility toggle to also initialize/destroy sparklines
         cardVisibilityToggles.forEach(toggle => {
             toggle.addEventListener('change', (event) => {
                 const cardId = event.target.dataset.cardId;
@@ -1583,25 +1707,30 @@ document.addEventListener('DOMContentLoaded', () => {
                             fetchApiData(config, true); 
                         }
                     }
+                    // Update trend indicators when visibility changes
+                    const itemConfig = apiConfigs.find(c => c.elements.card.id === cardId) || 
+                                       (cardId === 'altintlgr-card' ? { name: 'altinTlGr', elements: altinTlGrElements, card: altinTlGrElements.card } : null);
+                    if (itemConfig) {
+                        updateTrendIndicators(itemConfig.name, itemConfig);
+                    }
                 }
                 saveCardVisibility();
-                updatePriceTicker(); // Update ticker when visibility changes
+                updatePriceTicker();
             });
         });
 
-        requestNotificationPermission(); // Request permission on load (if default)
-        loadAlerts(); // Load saved alerts
+        requestNotificationPermission();
+        loadAlerts();
 
-        if(addAlertBtn) { // Ensure button exists before adding listener
+        if(addAlertBtn) {
             addAlertBtn.addEventListener('click', addAlert);
         } else {
             console.warn("#add-alert-btn not found.");
         }
 
-        updatePriceTicker(); // Initial call to populate ticker
+        updatePriceTicker();
         startMainInterval();
 
-        // Initialize SortableJS after cards are potentially reordered and visibility set
         if (mainContainer) {
             Sortable.create(mainContainer, {
                 animation: 150,
@@ -1610,35 +1739,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 onEnd: saveCardOrder
             });
         }
-        setupCloseCardButtons(); // Call to set up new close buttons
-        setupSparklineClickListeners(); // Add this AFTER cards are in the DOM
-    }
-
-    // Helper function to handle card closing logic
-    function closeCard(cardElement) {
-        if (!cardElement) return;
-        const cardId = cardElement.id;
-        cardElement.classList.add('hidden-card');
-
-        const settingsToggle = document.querySelector(`.card-visibility-toggle[data-card-id="${cardId}"]`);
-        if (settingsToggle) {
-            settingsToggle.checked = false;
-        }
-        saveCardVisibility(); 
-        updatePriceTicker(); // Update ticker as a card is hidden
-    }
-
-    // Event listeners for the new close buttons on cards
-    function setupCloseCardButtons() {
-        const closeButtons = document.querySelectorAll('.close-card-btn');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const card = event.target.closest('.price-card');
-                if (card) {
-                    closeCard(card);
-                }
-            });
-        });
+        setupCloseCardButtons();
+        setupSparklineClickListeners();
     }
 
     initializeApp();

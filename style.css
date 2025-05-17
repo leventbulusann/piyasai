@@ -360,6 +360,79 @@ body {
 /* --- END MODIFIED TIMESTAMP AND HIGH/LOW --- */
 
 
+/* NEW Indicator Display Styles */
+.indicator-container {
+    display: flex;
+    flex-direction: row; /* Align indicators horizontally */
+    flex-wrap: wrap; /* Allow disclaimer to wrap */
+    justify-content: center; /* Was space-evenly, now center */
+    align-items: flex-start; /* Align items to the top */
+    padding: 8px 0;
+    margin-top: 10px;
+    margin-bottom: 5px; 
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85em;
+}
+
+.indicator-item {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    text-align: center;
+    padding: 0 5px;
+    margin: 0 10px 8px 10px; /* Add horizontal margin, keep bottom margin for disclaimer */
+    flex-grow: 0; /* Was 1, now 0 to prevent undue expansion */
+    /* min-width: 120px; /* Removed */
+}
+
+.indicator-label { 
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 3px; /* Space between label and value */
+    font-size: 0.9em; /* Slightly smaller label */
+}
+
+.indicator-text { 
+    font-weight: bold;
+    font-size: 1em;
+    padding: 2px 4px;
+    border-radius: 3px;
+    min-width: 50px; /* Ensure a minimum width for text like N/A */
+    display: inline-block;
+}
+
+.indicator-text.increase { 
+    color: var(--green-increase); 
+    /* background-color: color-mix(in srgb, var(--green-increase) 15%, transparent); */
+}
+.indicator-text.decrease { 
+    color: var(--red-decrease); 
+    /* background-color: color-mix(in srgb, var(--red-decrease) 15%, transparent); */
+}
+.indicator-text.neutral { 
+    color: var(--text-secondary); 
+    /* background-color: color-mix(in srgb, var(--text-secondary) 15%, transparent); */
+}
+.indicator-text.error {
+    color: var(--red-decrease);
+    font-style: italic;
+}
+
+/* Refined Trend Disclaimer Style (Method 1) */
+.trend-disclaimer {
+    display: block; 
+    font-size: 0.75em; 
+    color: var(--text-secondary);
+    opacity: 0.8;
+    line-height: 1.3;
+    font-style: italic; 
+    max-width: 95%; /* Allow it to be a bit wider */
+    margin: 8px auto 0 auto; /* Adjusted top margin */
+    text-align: center;
+    flex-basis: 100%; /* Make disclaimer take full width to wrap to next line */
+}
+
 /* Flash Animations */
 @keyframes flashGreen {
     0% { background-color: color-mix(in srgb, var(--green-increase) 30%, var(--card-bg)); }
@@ -792,5 +865,33 @@ body {
     }
     #detailedApexChart {
         min-height: 250px !important; /* Adjust for mobile */
+    }
+}
+
+/* NEW App Footer Styles */
+.app-footer {
+    width: 100%;
+    max-width: 1000px; /* Or match your .main-container max-width */
+    text-align: center;
+    padding: 20px 15px; /* Some padding */
+    margin-top: 40px;  /* Space above the footer */
+    border-top: 1px solid var(--border-color);
+}
+
+.app-footer p {
+    margin: 0;
+    font-size: 0.8em; /* Small text */
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.app-footer strong {
+    color: var(--text-primary); /* Make "Disclaimer:" stand out a bit */
+}
+
+/* Responsive footer text */
+@media (max-width: 600px) {
+    .app-footer p {
+        font-size: 0.75em;
     }
 }
